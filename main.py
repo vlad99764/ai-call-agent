@@ -158,6 +158,19 @@ async def handle_media_stream(websocket: WebSocket):
                             print(f"Error processing audio data: {e}")
                     if response["type"] == "conversation.item.created":
                         print(f"conversation.item.created event: {response}")
+                    if response["type"] == "input_audio_buffer.speech_started":
+                        print("Speech Start:", response["type"])
+
+                        # Send clear event to Twilio
+                        await websocket.send_json(
+                            {"streamSid": stream_sid, "event": "clear"}
+                        )
+
+                        print("Cancelling AI speech from the server")
+
+                        # Send cancel message to OpenAI
+                        interrupt_message = {"type": "response.cancel"}
+                        await openai_ws.send(json.dumps(interrupt_message))
             except Exception as e:
                 print(f"Error in send_to_twilio: {e}")
 
