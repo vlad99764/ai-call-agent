@@ -61,19 +61,21 @@ async def index_page():
 
 
 @app.post("/make-call")
-async def make_call(request: Request):
+async def make_call(to_phone_number: str):
     """Make an outgoing call to the specified phone number."""
-    data = await request.json()
-    to_phone_number = data.get("to")
     if not to_phone_number:
         return {"error": "Phone number is required"}
+    try:
+        client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+        call = client.calls.create(
+            url=f"{NGROK_URL}/outgoing-call",
+            to=to_phone_number,
+            from_=TWILIO_PHONE_NUMBER,
+        )
+        print(f"Call initiated with SID: {call.sid}")
+    except Exception as e:
+        print(f"Error initiating call: {e}")
 
-    client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-    call = client.calls.create(
-        url=f"https://busy-troll-causal.ngrok-free.app/outgoing-call",
-        to=to_phone_number,
-        from_=TWILIO_PHONE_NUMBER,
-    )
     return {"call_sid": call.sid}
 
 
@@ -156,19 +158,6 @@ async def handle_media_stream(websocket: WebSocket):
                             print(f"Error processing audio data: {e}")
                     if response["type"] == "conversation.item.created":
                         print(f"conversation.item.created event: {response}")
-                    # if response["type"] == "input_audio_buffer.speech_started":
-                    #     # user_speaking = True
-                    #     print("User started speaking. Cancelling AI response.")
-                    #     # Send a cancel signal to OpenAI Realtime API
-                    #     cancel_message = {
-                    #         "type": "response.cancel",
-                    #         "reason": "user_interruption",
-                    #     }
-                    #     await openai_ws.send(json.dumps(cancel_message))
-
-                    # if response["type"] == "input_audio_buffer.speech_stopped":
-                    #     # user_speaking = False
-                    #     print("User stopped speaking. Resuming AI response.")
             except Exception as e:
                 print(f"Error in send_to_twilio: {e}")
 
@@ -185,25 +174,8 @@ async def send_session_update(openai_ws):
             "voice": VOICE,
             "instructions": SYSTEM_MESSAGE,
             "modalities": ["text", "audio"],
-            "temperature": 0.1,
+            "temperature": 0.8,
         },
     }
     print("Sending session update:", json.dumps(session_update))
     await openai_ws.send(json.dumps(session_update))
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    to_phone_number = input("Please enter the phone number to call: ")
-    client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-    try:
-        call = client.calls.create(
-            url=f"{NGROK_URL}/outgoing-call",
-            to=to_phone_number,
-            from_=TWILIO_PHONE_NUMBER,
-        )
-        print(f"Call initiated with SID: {call.sid}")
-    except Exception as e:
-        print(f"Error initiating call: {e}")
-    uvicorn.run(app, host="0.0.0.0", port=PORT)
