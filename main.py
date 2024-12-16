@@ -187,7 +187,7 @@ async def send_session_update(openai_ws):
             "voice": VOICE,
             "instructions": SYSTEM_MESSAGE,
             "modalities": ["text", "audio"],
-            "temperature": 0.8,
+            "temperature": 0.2,
         },
     }
     print("Sending session update:", json.dumps(session_update))
