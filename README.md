@@ -124,8 +124,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Author
 
-**Rehan Khan**
-[LinkedIn Profile](https://www.linkedin.com/in/rehankhantht/)
+**Vladyslav P.**
 
 ## Acknowledgments
 
